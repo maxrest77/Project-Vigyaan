@@ -35,10 +35,11 @@ export default function GoogleMapView() {
   const [alertVisible, setAlertVisible] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [historyDateRange, setHistoryDateRange] = useState('30'); // days
+  const [historyDateRange, setHistoryDateRange] = useState('30');
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [detailedLocation, setDetailedLocation] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mapRef = useRef(null);
 
   const fetchDisasters = async () => {
@@ -260,447 +261,736 @@ export default function GoogleMapView() {
   };
 
   return (
-    <div
-      style={{
-        fontFamily: 'sans-serif',
-        backgroundColor: darkMode ? '#1e1e1e' : '#ece2d0',
-        color: darkMode ? '#ffffff' : '#2b3e35',
-        minHeight: '100vh',
-        padding: '60px 48px',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}
-    >
+    <div style={{
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      backgroundColor: darkMode ? '#0f172a' : '#f8fafc',
+      color: darkMode ? '#e2e8f0' : '#1e293b',
+      minHeight: '100vh',
+      position: 'relative',
+    }}>
       {/* Header */}
-      <header style={{ textAlign: 'center', marginBottom: '36px' }}>
-        <h1 style={{
-          fontSize: '3rem',
-          fontWeight: '700',
-          letterSpacing: '1.5px',
-          margin: 0,
-          color: darkMode ? '#ffe8b3' : '#4b3b2b',
-          textShadow: '1px 1px 1px #c8b9a6',
-        }}>
-          🌐 Project Vigyaan
-        </h1>
-        <p style={{ fontSize: '1.25rem', marginTop: '6px', color: darkMode ? '#d2c3b5' : '#5a4a3c' }}>
-          Live Environmental Disaster Monitor
-        </p>
-      </header>
-
-      {/* Enhanced Location Display */}
-      {detailedLocation && (
+      <header style={{
+        background: darkMode ? '#1e293b' : '#ffffff',
+        borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+        padding: '1rem 1.5rem',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      }}>
         <div style={{
-          background: darkMode ? '#2a2a2a' : '#f9f3e9',
-          padding: '16px 24px',
-          borderRadius: '12px',
-          marginBottom: '24px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          border: `2px solid ${darkMode ? '#4a4a4a' : '#d4c4a8'}`,
-          maxWidth: '600px',
-          width: '100%',
+          maxWidth: '1400px',
+          margin: '0 auto',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '24px' }}>📍</span>
-            <h3 style={{ margin: 0, fontWeight: '600', color: darkMode ? '#ffe8b3' : '#6d5b44' }}>
-              Your Location
-            </h3>
-            <button 
-              onClick={getCurrentLocation}
-              disabled={locationLoading}
+          {/* Logo and Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '12px',
+              padding: '0.5rem',
+              fontSize: '1.5rem',
+            }}>
+              🌐
+            </div>
+            <div>
+              <h1 style={{
+                margin: 0,
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: darkMode ? '#f1f5f9' : '#1e293b',
+                lineHeight: '1.2',
+              }}>
+                Project Vigyaan
+              </h1>
+              <p style={{
+                margin: 0,
+                fontSize: '0.875rem',
+                color: darkMode ? '#94a3b8' : '#64748b',
+                fontWeight: '500',
+              }}>
+                Live Environmental Disaster Monitor
+              </p>
+            </div>
+          </div>
+
+          {/* Desktop Controls */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            '@media (max-width: 768px)': { display: 'none' }
+          }}>
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
               style={{
-                background: locationLoading ? '#ccc' : '#4CAF50',
-                color: 'white',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                cursor: locationLoading ? 'not-allowed' : 'pointer',
-                fontSize: '12px',
-                fontWeight: '600',
+                background: darkMode ? '#334155' : '#f1f5f9',
+                border: `1px solid ${darkMode ? '#475569' : '#e2e8f0'}`,
+                borderRadius: '8px',
+                padding: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '1.25rem',
+                transition: 'all 0.2s',
+                ':hover': {
+                  background: darkMode ? '#475569' : '#e2e8f0',
+                }
               }}
             >
-              {locationLoading ? '🔄 Updating...' : '🔄 Refresh'}
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+
+            {/* Notification Bell */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                style={{
+                  background: alertVisible ? '#ef4444' : (darkMode ? '#334155' : '#f1f5f9'),
+                  border: `1px solid ${darkMode ? '#475569' : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '1.25rem',
+                  transition: 'all 0.2s',
+                  position: 'relative',
+                }}
+              >
+                🔔
+                {alertVisible && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    width: '8px',
+                    height: '8px',
+                    background: '#ef4444',
+                    borderRadius: '50%',
+                    animation: 'pulse 2s infinite',
+                  }} />
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {notifOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  width: '320px',
+                  background: darkMode ? '#1e293b' : '#ffffff',
+                  border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  marginTop: '0.5rem',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                  zIndex: 1001,
+                }}>
+                  {alertVisible ? (
+                    <>
+                      <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: '600' }}>
+                        ⚠️ Disaster Alert{alertDisasters.length > 1 ? `s (${alertDisasters.length})` : ''}
+                      </h4>
+                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem' }}>
+                        <strong>📍 Location:</strong> {address}
+                      </p>
+                      <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.875rem' }}>
+                        <strong>📡 Mode:</strong> {proximityMode.toUpperCase()}
+                      </p>
+                      <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                        {alertDisasters.map((d, idx) => (
+                          <div key={d.id} style={{
+                            padding: '0.5rem',
+                            marginBottom: '0.5rem',
+                            background: darkMode ? '#334155' : '#f8fafc',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                          }}>
+                            <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
+                              {disasterTypes[d.type]?.label || d.type}
+                            </div>
+                            <div style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+                              📍 {d.name || 'Unknown Location'}
+                            </div>
+                            <div style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+                              🕒 {new Date(d.date).toLocaleString()}
+                            </div>
+                            <div style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+                              ⏱️ {formatDuration(d.date, d.toDate)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p style={{ margin: 0, fontWeight: '600', color: '#10b981' }}>
+                      ✅ No environmental dangers detected nearby currently.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: darkMode ? '#334155' : '#f1f5f9',
+                border: `1px solid ${darkMode ? '#475569' : '#e2e8f0'}`,
+                borderRadius: '8px',
+                padding: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '1.25rem',
+                display: 'none',
+                '@media (max-width: 768px)': { display: 'block' }
+              }}
+            >
+              ☰
             </button>
           </div>
-          
-          {locationError && (
-            <div style={{ color: '#ff6b6b', fontSize: '14px', marginBottom: '8px' }}>
-              ⚠️ {locationError}
-            </div>
-          )}
-          
-          <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
-            <div><strong>City:</strong> {detailedLocation.city}</div>
-            <div><strong>State:</strong> {detailedLocation.state}</div>
-            <div><strong>Country:</strong> {detailedLocation.country}</div>
-            {detailedLocation.postcode && <div><strong>Postcode:</strong> {detailedLocation.postcode}</div>}
-            <div><strong>Coordinates:</strong> {detailedLocation.coordinates.lat.toFixed(4)}, {detailedLocation.coordinates.lng.toFixed(4)}</div>
+        </div>
+      </header>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div style={{
+          background: darkMode ? '#1e293b' : '#ffffff',
+          borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+          padding: '1rem',
+          '@media (min-width: 769px)': { display: 'none' }
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+          }}>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              style={{
+                background: darkMode ? '#334155' : '#f1f5f9',
+                border: `1px solid ${darkMode ? '#475569' : '#e2e8f0'}`,
+                borderRadius: '8px',
+                padding: '0.75rem',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
+              {darkMode ? '☀️' : '🌙'} {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
           </div>
         </div>
       )}
 
-      {/* Controls row */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: '32px',
-        gap: '36px',
-        flexWrap: 'wrap',
-        width: '100%',
-        maxWidth: '1200px',
+      {/* Main Content */}
+      <main style={{
+        maxWidth: '1400px',
+        margin: '0 auto',
+        padding: '1.5rem',
+        '@media (max-width: 768px)': { padding: '1rem' }
       }}>
-        <div style={{
-          display: 'flex',
-          gap: '20px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          flexGrow: 1,
-          maxWidth: '800px',
-          justifyContent: 'flex-start',
-        }}>
-          <label style={{ fontWeight: '600' }}>Filter:</label>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} style={selectStyle(darkMode)}>
-            <option value="ALL">All</option>
-            {Object.entries(disasterTypes).map(([key, { label }]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-
-          <label style={{ fontWeight: '600' }}>Proximity:</label>
-          <select value={proximityMode} onChange={(e) => setProximityMode(e.target.value)} style={selectStyle(darkMode)}>
-            <option value="nearby">Nearby</option>
-            <option value="state">State</option>
-            <option value="country">Nationwide</option>
-          </select>
-
-          {proximityMode === 'nearby' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
-              <input type="range" min="50" max="1000" step="50" value={radiusKm} onChange={(e) => setRadiusKm(e.target.value)} style={{ flexGrow: 1 }} />
-              <span style={{ minWidth: '55px', textAlign: 'center', fontWeight: '600' }}>{radiusKm} km</span>
-            </div>
-          )}
-
-          {/* History Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontWeight: '600' }}>History:</label>
-          <button
-              onClick={() => setShowHistory(!showHistory)}
-              style={{
-                background: showHistory ? '#4CAF50' : '#666',
-                color: 'white',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: '600',
-              }}
-            >
-              {showHistory ? '📚 Showing' : '📚 Show'}
-            </button>
-          </div>
-
-          {showHistory && (
-            <select 
-              value={historyDateRange} 
-              onChange={(e) => {
-                setHistoryDateRange(e.target.value);
-                fetchHistoricalDisasters(parseInt(e.target.value));
-              }} 
-              style={selectStyle(darkMode)}
-            >
-              <option value="7">Last 7 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="90">Last 90 days</option>
-              <option value="180">Last 6 months</option>
-              <option value="365">Last year</option>
-            </select>
-          )}
-        </div>
-
-        {/* Notification bell */}
-        <div style={{ position: 'relative' }}>
-          <button onClick={() => setNotifOpen(!notifOpen)} style={bellButtonStyle(alertVisible)}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} width={28} height={28} style={{ color: alertVisible ? '#ff4d4d' : '#fff' }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V4a1 1 0 10-2 0v1.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            {alertVisible && <span style={sirenPulseStyle} />}
-          </button>
-
-          {notifOpen && (
-            <div style={notifBoxStyle}>
-              {alertVisible ? (
-                <>
-                  <strong style={{ display: 'block', fontSize: '1.15rem', marginBottom: '14px' }}>
-                    ⚠️ Disaster Alert{alertDisasters.length > 1 ? `s (${alertDisasters.length})` : ''}
-                  </strong>
-                  <p><b>📍 Location:</b> {address}</p>
-                  <p><b>📡 Mode:</b> {proximityMode.toUpperCase()}</p>
-                  <ul style={{ marginTop: 0, paddingLeft: '20px' }}>
-                    {alertDisasters.map((d, idx) => (
-                      <li key={d.id} style={{ marginBottom: idx === alertDisasters.length - 1 ? 0 : '14px' }}>
-                        <b>{disasterTypes[d.type]?.label || d.type}</b><br />
-                        📍 {d.name || 'Unknown Location'}<br />
-                        🕒 From: {new Date(d.date).toLocaleString()}<br />
-                        ⏱️ Duration: {formatDuration(d.date, d.toDate)}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p style={{ margin: 0, fontWeight: '600' }}>✅ No environmental dangers detected nearby currently.</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 🌗 Dark mode toggle */}
-        <button onClick={() => setDarkMode(!darkMode)} style={darkModeToggleStyle}>
-          {darkMode ? '☀️' : '🌙'}
-        </button>
-      </div>
-
-      {/* Map and Legend */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '48px',
-          alignItems: 'flex-start',
-          width: '100%',
-          maxWidth: '1200px',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div
-          style={{
-            flex: '1 1 640px',
-            background: darkMode ? '#2a2a2a' : '#f9f3e9',
+        {/* Location Card */}
+        {detailedLocation && (
+          <div style={{
+            background: darkMode ? '#1e293b' : '#ffffff',
             borderRadius: '16px',
-            boxShadow: '0 6px 14px rgba(0,0,0,0.2)',
-            overflow: 'hidden',
-            minWidth: '300px',
-            position: 'relative',
-          }}
-        >
-                <LoadScript
-            googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
-            onLoad={() => setGoogleLoaded(true)}
-            libraries={['places', 'geometry']}
-          >
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: '1rem',
+              flexWrap: 'wrap',
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '1rem',
+                }}>
+                  <div style={{
+                    background: '#10b981',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.25rem',
+                  }}>
+                    📍
+                  </div>
+                  <div>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '1.25rem',
+                      fontWeight: '600',
+                      color: darkMode ? '#f1f5f9' : '#1e293b',
+                    }}>
+                      Your Location
+                    </h3>
+                    <p style={{
+                      margin: 0,
+                      fontSize: '0.875rem',
+                      color: darkMode ? '#94a3b8' : '#64748b',
+                    }}>
+                      {detailedLocation.city}, {detailedLocation.state}
+                    </p>
+                  </div>
+                </div>
+
+                {locationError && (
+                  <div style={{
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    marginBottom: '1rem',
+                    color: '#dc2626',
+                    fontSize: '0.875rem',
+                  }}>
+                    ⚠️ {locationError}
+                  </div>
+                )}
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '1rem',
+                  fontSize: '0.875rem',
+                }}>
+                  <div>
+                    <strong style={{ color: darkMode ? '#cbd5e1' : '#475569' }}>City:</strong>
+                    <br />{detailedLocation.city}
+                  </div>
+                  <div>
+                    <strong style={{ color: darkMode ? '#cbd5e1' : '#475569' }}>State:</strong>
+                    <br />{detailedLocation.state}
+                  </div>
+                  <div>
+                    <strong style={{ color: darkMode ? '#cbd5e1' : '#475569' }}>Country:</strong>
+                    <br />{detailedLocation.country}
+                  </div>
+                  {detailedLocation.postcode && (
+                    <div>
+                      <strong style={{ color: darkMode ? '#cbd5e1' : '#475569' }}>Postcode:</strong>
+                      <br />{detailedLocation.postcode}
+                    </div>
+                  )}
+                  <div>
+                    <strong style={{ color: darkMode ? '#cbd5e1' : '#475569' }}>Coordinates:</strong>
+                    <br />{detailedLocation.coordinates.lat.toFixed(4)}, {detailedLocation.coordinates.lng.toFixed(4)}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={getCurrentLocation}
+                disabled={locationLoading}
+                style={{
+                  background: locationLoading ? '#94a3b8' : '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1rem',
+                  cursor: locationLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {locationLoading ? '🔄 Updating...' : '🔄 Refresh Location'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Controls Section */}
+        <div style={{
+          background: darkMode ? '#1e293b' : '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          marginBottom: '1.5rem',
+          border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+        }}>
+          <h3 style={{
+            margin: '0 0 1rem 0',
+            fontSize: '1.125rem',
+            fontWeight: '600',
+            color: darkMode ? '#f1f5f9' : '#1e293b',
+          }}>
+            🎛️ Map Controls
+          </h3>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '1rem',
+            alignItems: 'end',
+          }}>
+            {/* Filter Control */}
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: darkMode ? '#cbd5e1' : '#475569',
+              }}>
+                Disaster Type Filter
+              </label>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: `1px solid ${darkMode ? '#475569' : '#d1d5db'}`,
+                  background: darkMode ? '#334155' : '#ffffff',
+                  color: darkMode ? '#f1f5f9' : '#1e293b',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="ALL">All Disaster Types</option>
+                {Object.entries(disasterTypes).map(([key, { label }]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Proximity Control */}
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: darkMode ? '#cbd5e1' : '#475569',
+              }}>
+                Proximity Mode
+              </label>
+              <select
+                value={proximityMode}
+                onChange={(e) => setProximityMode(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: `1px solid ${darkMode ? '#475569' : '#d1d5db'}`,
+                  background: darkMode ? '#334155' : '#ffffff',
+                  color: darkMode ? '#f1f5f9' : '#1e293b',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="nearby">Nearby (Radius-based)</option>
+                <option value="state">State Level</option>
+                <option value="country">Country Level</option>
+              </select>
+            </div>
+
+            {/* Radius Control */}
+            {proximityMode === 'nearby' && (
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: darkMode ? '#cbd5e1' : '#475569',
+                }}>
+                  Search Radius: {radiusKm} km
+                </label>
+                <input
+                  type="range"
+                  min="50"
+                  max="1000"
+                  step="50"
+                  value={radiusKm}
+                  onChange={(e) => setRadiusKm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '6px',
+                    borderRadius: '3px',
+                    background: darkMode ? '#475569' : '#d1d5db',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* History Toggle */}
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: darkMode ? '#cbd5e1' : '#475569',
+              }}>
+                Historical Data
+              </label>
+          <button
+                onClick={() => setShowHistory(!showHistory)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: `1px solid ${showHistory ? '#10b981' : (darkMode ? '#475569' : '#d1d5db')}`,
+                  background: showHistory ? '#10b981' : (darkMode ? '#334155' : '#ffffff'),
+                  color: showHistory ? 'white' : (darkMode ? '#f1f5f9' : '#1e293b'),
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {showHistory ? '📚 History Enabled' : '📚 Enable History'}
+          </button>
+            </div>
+
+            {/* History Date Range */}
+            {showHistory && (
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: darkMode ? '#cbd5e1' : '#475569',
+                }}>
+                  Date Range
+                </label>
+                <select
+                  value={historyDateRange}
+                  onChange={(e) => {
+                    setHistoryDateRange(e.target.value);
+                    fetchHistoricalDisasters(parseInt(e.target.value));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: `1px solid ${darkMode ? '#475569' : '#d1d5db'}`,
+                    background: darkMode ? '#334155' : '#ffffff',
+                    color: darkMode ? '#f1f5f9' : '#1e293b',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="7">Last 7 days</option>
+                  <option value="30">Last 30 days</option>
+                  <option value="90">Last 90 days</option>
+                  <option value="180">Last 6 months</option>
+                  <option value="365">Last year</option>
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Map Section */}
+        <div style={{
+          background: darkMode ? '#1e293b' : '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          marginBottom: '1.5rem',
+          border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 300px',
+            gap: '1.5rem',
+            '@media (max-width: 1024px)': {
+              gridTemplateColumns: '1fr',
+            }
+          }}>
+            {/* Map Container */}
+            <div style={{
+              background: darkMode ? '#334155' : '#f8fafc',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              position: 'relative',
+              minHeight: '500px',
+            }}>
+      <LoadScript
+        googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+        onLoad={() => setGoogleLoaded(true)}
+                libraries={['places', 'geometry']}
+      >
         <ClusterMap
-              disasters={allDisasters}
+                  disasters={allDisasters}
           getEmojiIcon={getEmojiIcon}
           userLocation={userLocation}
-              radiusKm={radiusKm}
-              proximityMode={proximityMode}
+                  radiusKm={radiusKm}
+                  proximityMode={proximityMode}
           darkMode={darkMode}
           mapRef={mapRef}
-              showHistory={showHistory}
+                  showHistory={showHistory}
         />
       </LoadScript>
 
-          {/* 🔄 Recenter to user button */}
+              {/* Recenter Button */}
       {userLocation && (
         <button
-          title="Recenter Map"
           onClick={() => {
             if (mapRef.current) {
               mapRef.current.panTo(userLocation);
               mapRef.current.setZoom(6);
             }
           }}
-              style={{
-                position: 'absolute',
-                bottom: '16px',
-                right: '16px',
-                zIndex: 99,
-                background: '#ffcf91',
-                border: 'none',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-              }}
-            >
-              📍 My Location
+                  style={{
+                    position: 'absolute',
+                    bottom: '1rem',
+                    right: '1rem',
+                    background: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    zIndex: 100,
+                  }}
+                >
+                  📍 My Location
         </button>
       )}
-        </div>
-
-        {/* Enhanced Legend box */}
-        <aside
-          style={{
-            width: '280px',
-            padding: '18px 20px',
-            borderRadius: '16px',
-            background: darkMode ? '#2a2a2a' : '#f9f3e9',
-            color: darkMode ? '#eee' : '#4b3b2b',
-            boxShadow: '0 6px 14px rgba(0,0,0,0.2)',
-            alignSelf: 'flex-start',
-          }}
-        >
-          <h4 style={{
-            textAlign: 'center',
-            marginBottom: '16px',
-            fontWeight: '700',
-            fontSize: '1.25rem',
-            letterSpacing: '0.03em',
-            color: darkMode ? '#ffe8b3' : '#6d5b44',
-          }}>
-            Legend
-          </h4>
-          
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: '8px',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: darkMode ? '#d2c3b5' : '#5a4a3c'
-            }}>
-              <span>Live Events</span>
-              <span style={{ color: '#4CAF50' }}>●</span>
             </div>
-            {showHistory && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                fontSize: '14px',
+
+            {/* Legend */}
+            <div style={{
+              background: darkMode ? '#334155' : '#f8fafc',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              height: 'fit-content',
+            }}>
+              <h4 style={{
+                margin: '0 0 1rem 0',
+                fontSize: '1rem',
                 fontWeight: '600',
-                color: darkMode ? '#d2c3b5' : '#5a4a3c'
+                color: darkMode ? '#f1f5f9' : '#1e293b',
+                textAlign: 'center',
               }}>
-                <span>Historical Events</span>
-                <span style={{ color: '#FF9800' }}>●</span>
-              </div>
-            )}
-          </div>
-          
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {Object.entries(disasterTypes).map(([type, { label, icon, color }]) => (
-              <li
-                key={type}
-                style={{
+                🗺️ Map Legend
+              </h4>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '12px',
-                  fontWeight: '600',
-                  fontSize: '1rem',
-                }}
-              >
-                <span style={{ fontSize: '22px' }}>{icon}</span>
-                <span>{label}</span>
-              </li>
-            ))}
-          </ul>
-          
-          {showHistory && (
-            <div style={{ 
-              marginTop: '16px', 
-              padding: '12px', 
-              background: darkMode ? '#3a3a3a' : '#f0e6d6',
-              borderRadius: '8px',
-              fontSize: '14px'
-            }}>
-              <div style={{ fontWeight: '600', marginBottom: '4px' }}>📚 History Mode</div>
-              <div>Showing events from the last {historyDateRange} days</div>
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                }}>
+                  <span>Live Events</span>
+                  <span style={{ color: '#10b981' }}>●</span>
+                </div>
+                {showHistory && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                  }}>
+                    <span>Historical Events</span>
+                    <span style={{ color: '#f59e0b' }}>●</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gap: '0.5rem',
+              }}>
+                {Object.entries(disasterTypes).map(([type, { label, icon, color }]) => (
+                  <div
+                    key={type}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem',
+                      borderRadius: '6px',
+                      background: darkMode ? '#475569' : '#f1f5f9',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.125rem' }}>{icon}</span>
+                    <span style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: darkMode ? '#e2e8f0' : '#475569',
+                    }}>
+                      {label}
+            </span>
+                  </div>
+                ))}
+              </div>
+
+              {showHistory && (
+                <div style={{
+                  marginTop: '1rem',
+                  padding: '0.75rem',
+                  background: darkMode ? '#475569' : '#f1f5f9',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
+                    📚 History Mode
+                  </div>
+                  <div style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+                    Showing events from the last {historyDateRange} days
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
-        </aside>
-      </div>
 
-      {/* Statistics Component */}
-      <DisasterStats 
-        disasters={disasters}
-        historicalDisasters={historicalDisasters}
-        showHistory={showHistory}
-        darkMode={darkMode}
-      />
+        {/* Statistics Component */}
+        <DisasterStats 
+          disasters={disasters}
+          historicalDisasters={historicalDisasters}
+          showHistory={showHistory}
+          darkMode={darkMode}
+        />
 
-      {/* Emergency Support Component */}
-      <EmergencySupport 
-        userLocation={userLocation}
-        darkMode={darkMode}
-        mapRef={mapRef}
-      />
+        {/* Emergency Support Component */}
+        <EmergencySupport 
+          userLocation={userLocation}
+          darkMode={darkMode}
+          mapRef={mapRef}
+        />
+      </main>
 
-      {/* 🔁 Animations */}
+      {/* Animations */}
       <style>{`
-        @keyframes sirenPulse {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.15); opacity: 0.5; }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
     </div>
   );
 }
-
-// 🔧 Reusable styles
-const selectStyle = (darkMode) => ({
-  padding: '6px 14px',
-  borderRadius: '8px',
-  fontSize: '1rem',
-  border: '1.5px solid #b49e74',
-  backgroundColor: darkMode ? '#333' : '#f9f3e9',
-  color: darkMode ? '#fff' : '#4b3b2b',
-  cursor: 'pointer',
-});
-
-const bellButtonStyle = (alertVisible) => ({
-  fontSize: '28px',
-  borderRadius: '50%',
-  border: 'none',
-  cursor: 'pointer',
-  padding: '8px 12px',
-  backgroundColor: '#b49e74',
-  color: '#fff',
-  boxShadow: '0 0 10px rgba(180,158,116,0.6)',
-  position: 'relative',
-  transition: 'box-shadow 0.3s ease',
-  outline: 'none',
-});
-
-const sirenPulseStyle = {
-  position: 'absolute',
-  top: '-6px',
-  left: '-6px',
-  width: '44px',
-  height: '44px',
-  borderRadius: '50%',
-  border: '2.5px solid rgba(255, 77, 77, 0.7)',
-  animation: 'sirenPulse 1.5s infinite ease-in-out',
-};
-
-const notifBoxStyle = {
-  position: 'absolute',
-  top: '44px',
-  right: '0',
-  width: '340px',
-  background: '#fff8f0',
-  color: '#4b3b2b',
-  border: '1.5px solid #b49e74',
-  borderRadius: '14px',
-  padding: '20px 24px',
-  boxShadow: '0 8px 14px rgba(180,158,116,0.35)',
-  zIndex: 9999,
-  fontSize: '0.95rem',
-};
-
-const darkModeToggleStyle = {
-  fontSize: '26px',
-  padding: '6px 10px',
-  borderRadius: '10px',
-  background: '#ffcf91',
-  border: 'none',
-  cursor: 'pointer',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-};
