@@ -1,11 +1,13 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-import GoogleMapView from './components/GoogleMapView';
+export default function HomeRedirect() {
+  const router = useRouter();
 
-export default function Home() {
-  return (
-    <main>
-      <GoogleMapView />
-    </main>
-  );
+  useEffect(() => {
+    router.push('/login');
+  }, [router]);
+
+  return null;
 }
