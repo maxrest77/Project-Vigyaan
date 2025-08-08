@@ -5,6 +5,9 @@ import { LoadScript } from '@react-google-maps/api';
 import ClusterMap from './ClusterMap';
 import DisasterStats from './DisasterStats';
 import EmergencySupport from './EmergencySupport';
+import { useAuth } from '../../hooks/useAuth';
+import { useAuthContext } from '../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const disasterTypes = {
   EQ: { label: 'Earthquake', icon: '🗻', color: '#ff6b6b' },
@@ -43,7 +46,18 @@ export default function GoogleMapView() {
   const mapRef = useRef(null);
   const [userInfo, setUserInfo] = useState(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const { logout } = useAuth();
+  const { user } = useAuthContext();
+  const router = useRouter();
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const fetchDisasters = async () => {
     try {
@@ -452,52 +466,70 @@ export default function GoogleMapView() {
               )}
             </div>
 
-        {userInfo && (
-  <div style={{ position: 'relative' }}>
-    <button
-      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        background: darkMode ? '#334155' : '#f1f5f9',
-        border: `1px solid ${darkMode ? '#475569' : '#e2e8f0'}`,
-        borderRadius: '9999px',
-        padding: '0.4rem 0.75rem',
-        fontSize: '0.875rem',
-        fontWeight: '500',
-        color: darkMode ? '#f8fafc' : '#1e293b',
-        cursor: 'pointer'
-      }}
-    >
-      👤 {userInfo.role === 'admin' ? 'Admin' : 'User'}
-    </button>
+        {user && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: darkMode ? '#334155' : '#f1f5f9',
+                border: `1px solid ${darkMode ? '#475569' : '#e2e8f0'}`,
+                borderRadius: '9999px',
+                padding: '0.4rem 0.75rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: darkMode ? '#f8fafc' : '#1e293b',
+                cursor: 'pointer'
+              }}
+            >
+              👤 {user.email}
+            </button>
 
-    {userDropdownOpen && (
-      <div style={{
-        position: 'absolute',
-        top: '100%',
-        right: 0,
-        marginTop: '0.5rem',
-        background: darkMode ? '#1e293b' : '#ffffff',
-        color: darkMode ? '#f8fafc' : '#1e293b',
-        border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
-        borderRadius: '12px',
-        padding: '1rem',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-        zIndex: 1001,
-        minWidth: '260px'
-      }}>
-        <p style={{ marginBottom: '0.5rem' }}><strong>📛 Email:</strong> {userInfo.email}</p>
-        <p style={{ marginBottom: '0.5rem' }}><strong>🛡️ Role:</strong> {userInfo.role}</p>
-        <p style={{ marginBottom: '0.5rem' }}><strong>⏱️ Login Time:</strong> {new Date().toLocaleString()}</p>
-        <p style={{ marginBottom: '0.5rem' }}><strong>🔐 Access Level:</strong> {userInfo.role === 'admin' ? 'Full Control' : 'View & Alert'}</p>
-        <p style={{ marginBottom: '0.5rem' }}><strong>📞 Contact:</strong>91+ 9742884588 </p>
-        <p style={{ marginBottom: '0.5rem' }}><strong>🆔 Session ID:</strong> {Math.random().toString(36).substr(2, 8)}</p>
-      </div>
-    )}
-  </div>
-)}
+            {userDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '0.5rem',
+                background: darkMode ? '#1e293b' : '#ffffff',
+                color: darkMode ? '#f8fafc' : '#1e293b',
+                border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+                borderRadius: '12px',
+                padding: '1rem',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                zIndex: 1001,
+                minWidth: '260px'
+              }}>
+                <p style={{ marginBottom: '0.5rem' }}><strong>📛 Email:</strong> {user.email}</p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>🛡️ Role:</strong> User</p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>⏱️ Login Time:</strong> {new Date().toLocaleString()}</p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>🔐 Access Level:</strong> View & Alert</p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>📞 Contact:</strong>91+ 9742884588 </p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>🆔 Session ID:</strong> {Math.random().toString(36).substr(2, 8)}</p>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#ef4444',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    marginTop: '0.5rem',
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
 
             {/* Mobile Menu Button */}

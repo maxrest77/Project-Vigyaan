@@ -3,6 +3,7 @@
 import './globals.css'
 import { Geist, Geist_Mono } from 'next/font/google'
 import Script from 'next/script'
+import { AuthContextProvider } from '../contexts/AuthContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -18,7 +19,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased">
-        {children}
+        <AuthContextProvider>
+          {children}
+        </AuthContextProvider>
 
         {/* ✅ Chatbase chatbot integration (updated version) */}
         <Script id="chatbase-loader" strategy="afterInteractive">

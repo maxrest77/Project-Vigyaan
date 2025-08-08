@@ -2,30 +2,43 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { useAuth } from '../../hooks/useAuth';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState(null); // null → choose screen, 'user' or 'admin'
+  const { login, signup, loading, error } = useAuth();
+  const { user } = useAuthContext();
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
-  const [pass, setPass] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
- const handleLogin = (e) => {
-  e.preventDefault();
-
-  // Save details temporarily
-  const userInfo = {
-    role: mode, // 'user' or 'admin'
-    email: email,
-  };
-  localStorage.setItem('loginInfo', JSON.stringify(userInfo));
-
-  if (mode === 'user') {
+  // Redirect if user is already logged in
+  if (user) {
     router.push('/map');
-  } else if (mode === 'admin') {
-     router.push('/map');
+    return null;
   }
-};
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (isSignup && password !== confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+
+    try {
+      if (isSignup) {
+        await signup(email, password);
+      } else {
+        await login(email, password);
+      }
+      router.push('/map');
+    } catch (error) {
+      console.error('Authentication error:', error);
+    }
+  };
 
   return (
     <div style={{
@@ -36,118 +49,105 @@ export default function LoginPage() {
       alignItems: 'center',
       padding: '2rem',
     }}>
-      {/* Step 1: Choose Role */}
-      {!mode && (
-        <div style={{
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '16px',
-          padding: '2rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1.5rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-          width: '100%',
-          maxWidth: '400px'
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
+        padding: '2rem',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        width: '100%',
+        maxWidth: '400px'
+      }}>
+        <h2 style={{
+          fontSize: '1.25rem',
+          fontWeight: '600',
+          marginBottom: '1rem',
+          color: '#1e293b',
+          textAlign: 'center'
         }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1e293b' }}>
-            Who do you want to login as?
-          </h2>
-          <button
-            onClick={() => setMode('user')}
-            style={selectButtonStyle}
-          >
-            👤 Login as User
-          </button>
-          <button
-            onClick={() => setMode('admin')}
-            style={selectButtonStyle}
-          >
-            🛡️ Login as Admin
-          </button>
-        </div>
-      )}
+          {isSignup ? '👤 Create Account' : '👤 User Login'}
+        </h2>
 
-      {/* Step 2: Login Form */}
-      {mode && (
-        <div style={{
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '16px',
-          padding: '2rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-          width: '100%',
-          maxWidth: '400px'
-        }}>
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
+        {error && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            padding: '0.75rem',
             marginBottom: '1rem',
-            color: '#1e293b'
+            color: '#dc2626',
+            fontSize: '0.875rem'
           }}>
-            {mode === 'user' ? '👤 User Login' : '🛡️ Admin Login'}
-          </h2>
+            {error}
+          </div>
+        )}
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-            />
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={inputStyle}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={inputStyle}
+          />
+          {isSignup && (
             <input
               type="password"
-              placeholder="Password"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
               style={inputStyle}
             />
-            <button type="submit" style={loginButtonStyle}>
-              Login
-            </button>
-          </form>
+          )}
+          <button 
+            type="submit" 
+            style={loginButtonStyle}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : (isSignup ? 'Sign Up' : 'Login')}
+          </button>
+        </form>
 
+        <div style={{
+          marginTop: '1rem',
+          textAlign: 'center',
+          fontSize: '0.875rem',
+          color: '#64748b'
+        }}>
+          {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
             onClick={() => {
-              setMode(null);
+              setIsSignup(!isSignup);
               setEmail('');
-              setPass('');
+              setPassword('');
+              setConfirmPassword('');
             }}
             style={{
-              marginTop: '1rem',
-              fontSize: '0.875rem',
-              color: '#64748b',
               background: 'none',
               border: 'none',
+              color: '#10b981',
               cursor: 'pointer',
               textDecoration: 'underline',
+              fontSize: '0.875rem'
             }}
           >
-            ← Back to role selection
+            {isSignup ? 'Login here' : 'Sign up here'}
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-// 🔘 Style for the select buttons
-const selectButtonStyle = {
-  width: '100%',
-  padding: '0.75rem',
-  borderRadius: '8px',
-  background: '#10b981',
-  color: 'white',
-  fontSize: '1rem',
-  fontWeight: '600',
-  border: 'none',
-  cursor: 'pointer',
-  transition: 'background 0.3s',
-};
 
 // 🔐 Style for the input boxes
 const inputStyle = {
@@ -155,6 +155,8 @@ const inputStyle = {
   borderRadius: '8px',
   border: '1px solid #cbd5e1',
   fontSize: '0.875rem',
+  width: '100%',
+  boxSizing: 'border-box'
 };
 
 // ✅ Login button
@@ -168,4 +170,5 @@ const loginButtonStyle = {
   fontWeight: '600',
   cursor: 'pointer',
   transition: 'background 0.3s',
+  width: '100%'
 };
