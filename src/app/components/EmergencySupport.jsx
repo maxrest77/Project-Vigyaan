@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const emergencyContacts = {
   police: {
@@ -103,6 +103,37 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
+  const [currentDirectionsRenderer, setCurrentDirectionsRenderer] = useState(null);
+  const [currentMarkers, setCurrentMarkers] = useState([]);
+
+  // Cleanup function for routes and markers
+  const clearCurrentRoute = () => {
+    // Clear previous directions renderer
+    if (currentDirectionsRenderer) {
+      currentDirectionsRenderer.setDirections({ routes: [] });
+      setCurrentDirectionsRenderer(null);
+    }
+
+    // Clear previous markers
+    currentMarkers.forEach(marker => {
+      if (marker && marker.setMap) {
+        marker.setMap(null);
+      }
+    });
+    setCurrentMarkers([]);
+  };
+
+  // Cleanup when component unmounts or evacuation type changes
+  useEffect(() => {
+    return () => {
+      clearCurrentRoute();
+    };
+  }, []);
+
+  // Clear routes when evacuation type changes
+  useEffect(() => {
+    clearCurrentRoute();
+  }, [selectedEvacuationType]);
 
   const handleEmergencyCall = (number) => {
     if (window.confirm(`Do you want to call ${number}?`)) {
@@ -128,30 +159,30 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
         keyword: type === 'shelter' ? 'emergency shelter' : undefined
       };
 
-             service.nearbySearch(request, (results, status) => {
-         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-           const places = results.slice(0, 10).map(place => ({
-             name: place.name,
-             address: place.vicinity,
-             location: place.geometry.location,
-             rating: place.rating,
-             distance: window.google.maps.geometry.spherical.computeDistanceBetween(
-               userLocation,
-               place.geometry.location
-             ) / 1000 // Convert to km
-           }));
-           
-           // Sort by distance (nearest first) and take top 5
-           const sortedPlaces = places
-             .sort((a, b) => a.distance - b.distance)
-             .slice(0, 5);
-           
-           setNearbyPlaces(sortedPlaces);
-         } else {
-           setNearbyPlaces([]);
-         }
-         setLoading(false);
-       });
+      service.nearbySearch(request, (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+          const places = results.slice(0, 10).map(place => ({
+            name: place.name,
+            address: place.vicinity,
+            location: place.geometry.location,
+            rating: place.rating,
+            distance: window.google.maps.geometry.spherical.computeDistanceBetween(
+              userLocation,
+              place.geometry.location
+            ) / 1000 // Convert to km
+          }));
+          
+          // Sort by distance (nearest first) and take top 5
+          const sortedPlaces = places
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 5);
+          
+          setNearbyPlaces(sortedPlaces);
+        } else {
+          setNearbyPlaces([]);
+        }
+        setLoading(false);
+      });
     } catch (error) {
       console.error('Error finding nearby places:', error);
       setLoading(false);
@@ -159,8 +190,18 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
     }
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   const getDirections = (destination) => {
     if (!userLocation || !window.google || !mapRef.current) return;
+    
+    // Clear any existing routes first
+    clearCurrentRoute();
     
     const directionsService = new window.google.maps.DirectionsService();
     const directionsRenderer = new window.google.maps.DirectionsRenderer({
@@ -177,9 +218,10 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
     directionsService.route(request, (result, status) => {
       if (status === window.google.maps.DirectionsStatus.OK) {
         directionsRenderer.setDirections(result);
+        setCurrentDirectionsRenderer(directionsRenderer);
         
         // Add markers for origin and destination
-        new window.google.maps.Marker({
+        const originMarker = new window.google.maps.Marker({
           position: userLocation,
           map: mapRef.current,
           icon: {
@@ -193,7 +235,7 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
           title: 'Your Location'
         });
 
-        new window.google.maps.Marker({
+        const destinationMarker = new window.google.maps.Marker({
           position: destination,
           map: mapRef.current,
           icon: {
@@ -207,11 +249,17 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
           title: 'Destination'
         });
 
+        // Store markers for later cleanup
+        setCurrentMarkers([originMarker, destinationMarker]);
+
         // Zoom to fit the route
         const bounds = new window.google.maps.LatLngBounds();
         bounds.extend(userLocation);
         bounds.extend(destination);
         mapRef.current.fitBounds(bounds);
+
+        // Scroll to top to show the route
+        scrollToTop();
       }
     });
   };
@@ -386,13 +434,54 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
                 padding: '16px',
                 borderRadius: '12px',
               }}>
-                <h5 style={{
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: '12px',
-                  fontWeight: '600',
-                  color: darkMode ? '#ffe8b3' : '#6d5b44',
                 }}>
-                  📍 Nearby {evacuationTypes[selectedEvacuationType]?.name}s
-                </h5>
+                  <h5 style={{
+                    fontWeight: '600',
+                    color: darkMode ? '#ffe8b3' : '#6d5b44',
+                  }}>
+                    📍 Nearby {evacuationTypes[selectedEvacuationType]?.name}s
+                  </h5>
+                  {currentDirectionsRenderer && (
+                    <button
+                      onClick={clearCurrentRoute}
+                      style={{
+                        background: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                      }}
+                    >
+                      🗑️ Clear Route
+                    </button>
+                  )}
+                </div>
+                
+                {currentDirectionsRenderer && (
+                  <div style={{
+                    background: '#e8f5e8',
+                    border: '1px solid #4CAF50',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    marginBottom: '12px',
+                    fontSize: '12px',
+                    color: '#2e7d32',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}>
+                    🗺️ Route is currently displayed on the map above. Scroll up to view it.
+                  </div>
+                )}
+                
                 {nearbyPlaces.map((place, index) => (
                   <div key={index} style={{
                     display: 'flex',
@@ -419,7 +508,7 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
                     <button
                       onClick={() => getDirections(place.location)}
                       style={{
-                        background: '#4CAF50',
+                        background: currentDirectionsRenderer ? '#2196F3' : '#4CAF50',
                         color: 'white',
                         border: 'none',
                         padding: '8px 12px',
@@ -429,7 +518,7 @@ export default function EmergencySupport({ userLocation, darkMode, mapRef }) {
                         fontWeight: '600',
                       }}
                     >
-                      🗺️ Get Route
+                      {currentDirectionsRenderer ? '🔄 Update Route' : '🗺️ Get Route'}
                     </button>
                   </div>
                 ))}

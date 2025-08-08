@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  signOut
+  signOut,
+  signInWithPopup,
+  signInAnonymously
 } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { auth, googleProvider } from '../firebase/config';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,34 @@ export const useAuth = () => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      return userCredential.user;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginAsGuest = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      const userCredential = await signInAnonymously(auth);
+      return userCredential.user;
+    } catch (error) {
+      setError(error.message);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setError(null);
@@ -53,6 +83,8 @@ export const useAuth = () => {
     error,
     login,
     signup,
+    loginWithGoogle,
+    loginAsGuest,
     logout
   };
 }; 

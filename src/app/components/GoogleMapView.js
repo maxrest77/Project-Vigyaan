@@ -502,8 +502,8 @@ export default function GoogleMapView() {
                 zIndex: 1001,
                 minWidth: '260px'
               }}>
-                <p style={{ marginBottom: '0.5rem' }}><strong>📛 Email:</strong> {user.email}</p>
-                <p style={{ marginBottom: '0.5rem' }}><strong>🛡️ Role:</strong> User</p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>📛 Email:</strong> {user.email || 'Guest User'}</p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>🛡️ Role:</strong> {user.isAnonymous ? 'Guest User' : user.providerData?.[0]?.providerId === 'google.com' ? 'Google User' : 'Email User'}</p>
                 <p style={{ marginBottom: '0.5rem' }}><strong>⏱️ Login Time:</strong> {new Date().toLocaleString()}</p>
                 <p style={{ marginBottom: '0.5rem' }}><strong>🔐 Access Level:</strong> View & Alert</p>
                 <p style={{ marginBottom: '0.5rem' }}><strong>📞 Contact:</strong>91+ 9742884588 </p>
